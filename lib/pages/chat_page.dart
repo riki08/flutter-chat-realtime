@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:real_time_chat/widgets/chat_message.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -10,7 +11,12 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ChatPageState extends State<ChatPage> with TickerProviderStateMixin {
+  final TextEditingController textEditingController = TextEditingController();
+  final _focusNode = FocusNode();
+  bool isWriting = false;
+  List<ChatMessage> list = [];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,37 +48,24 @@ class _ChatPageState extends State<ChatPage> {
               child: ListView.builder(
                 physics: const BouncingScrollPhysics(),
                 reverse: true,
-                itemBuilder: (_, i) => Text('$i'),
+                itemBuilder: (_, i) => list[i],
+                itemCount: list.length,
               ),
             ),
             const Divider(height: 1),
-            InputChat()
+            _inputChat()
           ],
         ),
       ),
     );
   }
-}
 
-class InputChat extends StatefulWidget {
-  InputChat({Key? key}) : super(key: key);
-
-  @override
-  State<InputChat> createState() => _InputChatState();
-}
-
-class _InputChatState extends State<InputChat> {
-  final TextEditingController textEditingController = TextEditingController();
-  final _focusNode = FocusNode();
-  bool isWriting = false;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _inputChat() {
     return Container(
       color: Colors.white,
       child: SafeArea(
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 8.0),
+          margin: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
             children: [
               Flexible(
@@ -80,29 +73,29 @@ class _InputChatState extends State<InputChat> {
                   controller: textEditingController,
                   onSubmitted: _handleSubmit,
                   onChanged: (value) {
-                    if (value.length > 0) {
+                    if (value.isNotEmpty) {
                       isWriting = true;
                     } else {
                       isWriting = false;
                     }
                     setState(() {});
                   },
-                  decoration:
-                      InputDecoration.collapsed(hintText: 'Enviar mensaje'),
+                  decoration: const InputDecoration.collapsed(
+                      hintText: 'Enviar mensaje'),
                   focusNode: _focusNode,
                 ),
               ),
               Container(
-                margin: EdgeInsets.symmetric(horizontal: 4.0),
+                margin: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: Platform.isIOS
                     ? CupertinoButton(
-                        child: Text('Enviar'),
                         onPressed: isWriting
                             ? () => _handleSubmit(textEditingController.text)
                             : null,
+                        child: const Text('Enviar'),
                       )
                     : Container(
-                        margin: EdgeInsets.symmetric(horizontal: 4.0),
+                        margin: const EdgeInsets.symmetric(horizontal: 4.0),
                         child: IconTheme(
                           data: IconThemeData(color: Colors.blue[400]),
                           child: IconButton(
@@ -112,7 +105,7 @@ class _InputChatState extends State<InputChat> {
                                   ? () =>
                                       _handleSubmit(textEditingController.text)
                                   : null,
-                              icon: Icon(Icons.send)),
+                              icon: const Icon(Icons.send)),
                         ),
                       ),
               )
@@ -124,10 +117,28 @@ class _InputChatState extends State<InputChat> {
   }
 
   _handleSubmit(String text) {
+    if (text.isEmpty) return;
+    _focusNode.requestFocus();
+    textEditingController.clear();
+    final chatMessage = ChatMessage(
+      text: text,
+      uid: '123',
+      animatedContainer: AnimationController(
+          vsync: this, duration: const Duration(milliseconds: 500)),
+    );
+    list.insert(0, chatMessage);
+    chatMessage.animatedContainer.forward();
     setState(() {
-      _focusNode.requestFocus();
-      textEditingController.clear();
       isWriting = false;
     });
+  }
+
+  @override
+  void dispose() {
+    // off del socket
+    for (ChatMessage message in list) {
+      message.animatedContainer.dispose();
+    }
+    super.dispose();
   }
 }
