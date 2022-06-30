@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+
+import 'package:real_time_chat/services/auth_service.dart';
 import 'package:real_time_chat/models/user.dart';
 
 class UserPage extends StatefulWidget {
@@ -11,22 +14,25 @@ class UserPage extends StatefulWidget {
 
 class _UserPageState extends State<UserPage> {
   final List users = [
-    UserModel(name: 'ricardo', email: 'rik@gma.com', online: true, uid: '1'),
-    UserModel(name: 'yessica', email: 'ri@gma.com', online: false, uid: '2'),
-    UserModel(name: 'meneo', email: 'rika@gma.com', online: true, uid: '3'),
-    UserModel(name: 'rosa', email: 'riuk@gma.com', online: false, uid: '4'),
+    User(nombre: 'ricardo', email: 'rik@gma.com', online: true, uid: '1'),
+    User(nombre: 'yessica', email: 'ri@gma.com', online: false, uid: '2'),
+    User(nombre: 'meneo', email: 'rika@gma.com', online: true, uid: '3'),
+    User(nombre: 'rosa', email: 'riuk@gma.com', online: false, uid: '4'),
   ];
 
-  RefreshController _refreshController =
+  final RefreshController _refreshController =
       RefreshController(initialRefresh: false);
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+    final user = authService.user;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Mi name',
-          style: TextStyle(color: Colors.black87),
+        title: Text(
+          user.nombre!,
+          style: const TextStyle(color: Colors.black87),
         ),
         centerTitle: true,
         elevation: 1,
@@ -36,7 +42,11 @@ class _UserPageState extends State<UserPage> {
             Icons.exit_to_app,
             color: Colors.black87,
           ),
-          onPressed: () {},
+          onPressed: () {
+            // desconectar del socket server
+            Navigator.pushReplacementNamed(context, 'login');
+            AuthService.deleteToken();
+          },
         ),
         actions: [
           Container(
@@ -96,15 +106,15 @@ class UserListTitle extends StatelessWidget {
     required this.user,
   }) : super(key: key);
 
-  final UserModel user;
+  final User user;
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: Text(user.name!),
+      title: Text(user.nombre!),
       subtitle: Text(user.email!),
       leading: CircleAvatar(
-        child: Text(user.name!.substring(0, 2)),
+        child: Text(user.nombre!.substring(0, 2)),
       ),
       trailing: Container(
         width: 10,

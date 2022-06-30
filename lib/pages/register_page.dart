@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:real_time_chat/widgets/custom_button.dart';
+import 'package:provider/provider.dart';
+import 'package:real_time_chat/helpers/show_alert.dart';
+import 'package:real_time_chat/services/auth_service.dart';
 
 import 'package:real_time_chat/widgets/custom_input.dart';
+import 'package:real_time_chat/widgets/custom_button.dart';
 import 'package:real_time_chat/widgets/labels.dart';
 import 'package:real_time_chat/widgets/logo.dart';
 
@@ -55,6 +58,8 @@ class __FormState extends State<_Form> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+
     return Container(
       margin: const EdgeInsets.only(top: 40),
       padding: const EdgeInsets.symmetric(horizontal: 50),
@@ -79,11 +84,25 @@ class __FormState extends State<_Form> {
             textController: passwCtrl,
           ),
           CustomButton(
-            title: 'Registro',
-            onPressed: () {
-              print(emailCtrl.text);
-              print(passwCtrl.text);
-            },
+            title: 'Crear cuenta',
+            onPressed: authService.authenticating
+                ? null
+                : () async {
+                    FocusScope.of(context).unfocus();
+                    print(emailCtrl.text);
+                    print(passwCtrl.text);
+                    final registerOk = await authService.register(
+                        nameCtrl.text.trim(),
+                        emailCtrl.text.trim(),
+                        passwCtrl.text.trim());
+
+                    if (registerOk == true) {
+                      //  conectar al socket server
+                      Navigator.pushReplacementNamed(context, 'user');
+                    } else {
+                      showAlert(context, 'Restistro incorrecto', registerOk);
+                    }
+                  },
           )
         ],
       ),

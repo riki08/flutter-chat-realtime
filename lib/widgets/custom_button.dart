@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 class CustomButton extends StatelessWidget {
   const CustomButton({
     Key? key,
-    required this.onPressed,
+    this.onPressed,
     required this.title,
   }) : super(key: key);
 
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final String title;
 
   @override
@@ -16,7 +16,9 @@ class CustomButton extends StatelessWidget {
       style: ButtonStyle(
         elevation: MaterialStateProperty.all(2),
         shape: MaterialStateProperty.all(const StadiumBorder()),
-        backgroundColor: MaterialStateProperty.all(Colors.blue),
+        backgroundColor: onPressed != null
+            ? MaterialStateProperty.all(Colors.blue)
+            : MaterialStateProperty.all(Colors.grey),
       ),
       onPressed: onPressed,
       child: SizedBox(

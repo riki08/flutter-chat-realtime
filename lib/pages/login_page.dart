@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:real_time_chat/helpers/show_alert.dart';
+import 'package:real_time_chat/services/auth_service.dart';
 import 'package:real_time_chat/widgets/custom_button.dart';
 
 import 'package:real_time_chat/widgets/custom_input.dart';
@@ -54,6 +57,8 @@ class __FormState extends State<_Form> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context);
+
     return Container(
       margin: const EdgeInsets.only(top: 40),
       padding: const EdgeInsets.symmetric(horizontal: 50),
@@ -73,10 +78,22 @@ class __FormState extends State<_Form> {
           ),
           CustomButton(
             title: 'Ingresar',
-            onPressed: () {
-              print(emailCtrl.text);
-              print(passwCtrl.text);
-            },
+            onPressed: authService.authenticating
+                ? null
+                : () async {
+                    FocusScope.of(context).unfocus();
+                    final loginOk = await authService.login(
+                        emailCtrl.text.trim(), passwCtrl.text.trim());
+
+                    if (loginOk) {
+                      // navegar a otra pantalla
+                      Navigator.pushReplacementNamed(context, 'user');
+                    } else {
+                      // mensaje de error
+                      showAlert(context, 'Login incorrecto',
+                          'Revise sus credenciales nuevamente;');
+                    }
+                  },
           )
         ],
       ),
